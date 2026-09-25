@@ -1,0 +1,28 @@
+name: Update tracker data
+
+on:
+  schedule:
+    - cron: '23 11 * * *'   # daily 11:23 UTC (after FRED's morning updates)
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  update-data:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Fetch FRED and price data
+        run: python scripts/fetch_data.py
+      - name: Commit and push
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add data/auto.json
+          git diff --cached --quiet || git commit -m "Auto-update data $(date -u +%Y-%m-%d)"
+          git pull --rebase origin main
+          git push

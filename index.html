@@ -1,0 +1,319 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>CHRW Freight Cycle Tracker</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
+<style>
+:root{--bg:#0b0e14;--bg2:#10141c;--card:#151a24;--card2:#1b2130;--line:#232b3a;--line2:#2e384b;--text:#e8ecf3;--muted:#9aa5b8;--dim:#6b7688;--blue:#3987e5;--orange:#d95926;--aqua:#199e70;--yellow:#c98500;--violet:#9085e9;--red:#e66767;--green:#5fd49f;--amber:#f0b35a}
+*{box-sizing:border-box}
+html{scroll-padding-top:70px}
+body{margin:0;background:var(--bg);color:var(--text);font-family:Inter,system-ui,sans-serif;font-size:14.5px;line-height:1.55;-webkit-font-smoothing:antialiased}
+a{color:var(--blue);text-decoration:none}a:hover{text-decoration:underline}
+nav{position:sticky;top:0;z-index:100;background:#0e1219;border-bottom:1px solid var(--line)}
+nav .in{max-width:1360px;margin:0 auto;padding:0 18px;height:56px;display:flex;align-items:center;gap:14px}
+nav .brand{font-weight:800;white-space:nowrap}nav .brand span{font-family:"JetBrains Mono",monospace;background:var(--blue);color:#fff;padding:2px 7px;border-radius:5px;font-size:12px;margin-right:8px}
+nav .links{display:flex;gap:2px;overflow-x:auto;scrollbar-width:none;flex:1}nav .links::-webkit-scrollbar{display:none}
+nav .links a{color:var(--muted);font-size:12.5px;font-weight:500;padding:7px 9px;border-radius:7px;white-space:nowrap}nav .links a:hover{color:var(--text);background:var(--card2);text-decoration:none}
+.wrap{max-width:1360px;margin:0 auto;padding:0 18px}
+section{padding:40px 0 10px}
+h1{font-size:28px;font-weight:800;letter-spacing:-.5px;margin:0 0 6px}
+h2{font-size:20px;font-weight:700;margin:0 0 4px}
+.kick{color:var(--blue);font-size:11.5px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase}
+.sub{color:var(--muted);margin:4px 0 16px;font-size:14px;max-width:960px}
+.card{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:18px}
+.card h3{margin:0 0 6px;font-size:15.5px;font-weight:700}
+.card .note{color:var(--dim);font-size:12px;margin-top:8px;line-height:1.5}
+.grid{display:grid;gap:14px}.g2{grid-template-columns:1fr 1fr}.g3{grid-template-columns:repeat(3,1fr)}.g32{grid-template-columns:3fr 2fr}.g23{grid-template-columns:2fr 3fr}
+@media(max-width:1000px){.g2,.g3,.g32,.g23{grid-template-columns:1fr}}
+.cw{position:relative;height:280px}.cw.tall{height:340px}.cw.short{height:220px}
+.ctrl{display:flex;gap:6px;flex-wrap:wrap;margin:6px 0 4px}
+.btn{background:var(--card2);border:1px solid var(--line2);color:var(--muted);padding:5px 10px;border-radius:7px;font-size:12px;cursor:pointer;font-weight:600;font-family:inherit}
+.btn.active,.btn:hover{color:#fff;border-color:var(--blue)}.btn.active{background:var(--blue)}
+/* phase gauge */
+.gauge{display:grid;grid-template-columns:repeat(5,1fr);gap:8px;margin-top:10px}
+.ph{border:1px solid var(--line2);border-radius:10px;padding:10px 11px;background:var(--card2);position:relative;font-size:12.5px}
+.ph .k{font-weight:700;font-size:14px}.ph .d{color:var(--muted);font-size:12px;margin-top:2px}
+.ph .votes{margin-top:8px;height:8px;background:var(--bg2);border-radius:5px;overflow:hidden;border:1px solid var(--line)}
+.ph .votes i{display:block;height:100%;background:var(--blue)}
+.ph .vn{font-family:"JetBrains Mono",monospace;font-size:11.5px;color:var(--muted);margin-top:4px}
+.ph.now{border:2px solid var(--blue);background:rgba(57,135,229,.12)}.ph.now .k{color:#8dbcf5}
+.big{font-family:"JetBrains Mono",monospace;font-weight:800;font-size:34px;letter-spacing:-1px}
+.kpis{display:grid;grid-template-columns:repeat(6,1fr);gap:10px}
+@media(max-width:1100px){.kpis{grid-template-columns:repeat(3,1fr)}}
+.kpi{background:var(--card2);border:1px solid var(--line2);border-radius:10px;padding:11px 12px}
+.kpi .v{font-family:"JetBrains Mono",monospace;font-weight:700;font-size:20px}.kpi .l{font-size:11.5px;color:var(--muted);line-height:1.3}.kpi .s{font-size:11px;color:var(--dim);margin-top:3px}
+.up{color:var(--green)}.dn{color:var(--red)}.fl{color:var(--amber)}
+/* scoreboard */
+table{width:100%;border-collapse:collapse;font-size:13px}
+th,td{padding:8px 9px;border-bottom:1px solid var(--line);text-align:left;vertical-align:top}
+th{color:var(--muted);font-weight:600;font-size:11.5px;text-transform:uppercase;letter-spacing:.5px}
+td.num,th.num{text-align:right;font-family:"JetBrains Mono",monospace;font-size:12.5px}
+.pill{display:inline-block;padding:2px 9px;border-radius:999px;font-size:11.5px;font-weight:700;white-space:nowrap}
+.pill.green{background:rgba(25,158,112,.18);color:var(--green)}.pill.amber{background:rgba(240,179,90,.16);color:var(--amber)}.pill.red{background:rgba(230,103,103,.16);color:var(--red)}.pill.grey{background:var(--card2);color:var(--muted)}
+.ind{display:grid;grid-template-columns:1.1fr 90px 130px 1.2fr;gap:6px 10px;align-items:center;padding:8px 0;border-bottom:1px solid var(--line);font-size:13px}
+.ind:last-child{border-bottom:0}.ind b{font-weight:600}.ind .why{color:var(--dim);font-size:11.5px}.ind .ph{padding:3px 8px;font-size:11.5px;text-align:center}
+.tl{display:grid;grid-template-columns:120px 1fr;gap:6px 12px;font-size:13px}.tl .d{color:#8dbcf5;font-family:"JetBrains Mono",monospace;font-size:12px}.tl .x{color:var(--muted)}.tl .x b{color:var(--text)}
+footer{padding:36px 0 50px;color:var(--dim);font-size:12px;line-height:1.6}
+.src{display:inline-block;font-size:10.5px;color:var(--dim);background:var(--bg2);border:1px solid var(--line);padding:0 6px;border-radius:4px;margin-left:4px;vertical-align:middle}
+.stale{color:var(--amber)}
+</style>
+</head>
+<body>
+<nav><div class="in"><div class="brand"><span>CHRW</span>Freight Cycle Tracker</div><div class="links">
+<a href="#phase">Phase</a><a href="#signposts">Signposts</a><a href="#spread">Spot vs Contract</a><a href="#demand">Demand</a><a href="#capacity">Capacity</a><a href="#chrw">CHRW KPIs</a><a href="#analog">Cycle Analogs</a><a href="#stock">Stock</a><a href="#calendar">Calendar</a><a href="#sources">Sources &amp; Updating</a><a href="https://juankhye.github.io/chrw-dashboard/">← Research dashboard</a></div></div></nav>
+
+<div class="wrap">
+
+<section id="phase">
+<span class="kick">C.H. Robinson · where are we in the truckload cycle</span>
+<h1>Freight Cycle Tracker</h1>
+<p class="sub">Every indicator that moves Robinson's spread, on one page, each one voting for a cycle phase. Public series (Cass, truckload PPI, diesel, trucking jobs, share price) refresh automatically each day via GitHub Actions. Market series that live behind paywalls (DAT spot and contract, tender rejections, Class 8 orders, FMCSA exits) and Robinson's own quarterly disclosures are entered by hand in <code>data/manual.json</code>. <span id="asof"></span></p>
+
+<div class="grid g32">
+  <div class="card">
+    <h3>Phase vote: what the indicators say, weighted</h3>
+    <div class="gauge" id="gauge"></div>
+    <div class="note" id="phaseNote"></div>
+  </div>
+  <div class="card">
+    <h3>Latest readings</h3>
+    <div class="kpis" id="kpis"></div>
+    <div class="note">Green = bullish for Robinson's gap re-opening; red = squeeze or demand deterioration; amber = mixed. Hover the charts below for the history behind each number.</div>
+  </div>
+</div>
+
+<div class="card" style="margin-top:14px">
+  <h3>Indicator-by-indicator phase read</h3>
+  <div id="indTable"></div>
+  <div class="note">Each row is mechanical: a rule converts the latest reading into a phase vote (A bottom, B squeeze, C catch-up, D top, E bust). The weights reflect how directly each series drives Robinson's gross profit per load. Rules are listed under Sources.</div>
+</div>
+</section>
+
+<section id="signposts">
+<span class="kick">Entry signposts</span>
+<h2>The checklist that decides whether B is turning into C</h2>
+<p class="sub">Status is set by hand after each data release. Rule of thumb from the research: start a position at three greens including margin or revisions, full size at four.</p>
+<div class="card"><table id="signTable"></table></div>
+</section>
+
+<section id="spread">
+<span class="kick">The spread</span>
+<h2>What shippers pay vs what truckers cost</h2>
+<p class="sub">DAT dry van national averages. Spot above contract squeezes Robinson's 70% contract book; spot rolling back below contract after a bid season is the broker's sweet spot. The truckload producer price index from the BLS is the free, long-history proxy for contract pricing.</p>
+<div class="grid g2">
+  <div class="card"><h3>DAT dry van spot vs contract, $/mile</h3><div class="ctrl" data-for="chDat"><button class="btn" data-r="12">1Y</button><button class="btn active" data-r="36">3Y</button><button class="btn" data-r="0">All</button></div><div class="cw"><canvas id="chDat"></canvas></div><div class="note" id="datNote"></div></div>
+  <div class="card"><h3>Spot minus contract spread, $/mile, and tender rejections</h3><div class="cw"><canvas id="chSpread"></canvas></div><div class="note">Spread below zero after a bid reset is the 2022 pattern that produced record margins. Tender rejection index (SONAR OTRI, %) rising means carriers refuse contract loads to chase spot: an early warning of squeeze. Manual series from news coverage; exact daily values require a SONAR licence.</div></div>
+  <div class="card"><h3>Truckload PPI (BLS, long-distance TL), y/y %</h3><div class="ctrl" data-for="chPpi"><button class="btn" data-r="36">3Y</button><button class="btn active" data-r="120">10Y</button><button class="btn" data-r="0">All</button></div><div class="cw"><canvas id="chPpi"></canvas></div><div class="note">FRED PCU484121484121, monthly, auto-refreshed. Blends contract and spot, includes fuel. Peaks in this series (2018, 2022) preceded Robinson's earnings peaks by 6 to 12 months; troughs (2019, 2023) preceded the share-price bottoms.</div></div>
+  <div class="card"><h3>Diesel, $/gallon (EIA weekly) and y/y</h3><div class="cw"><canvas id="chDiesel"></canvas></div><div class="note">FRED GASDESW, auto-refreshed. Fuel is a pass-through surcharge indexed to this series, so it inflates gross revenue and dilutes margin percentage without changing gross profit dollars. It also raises small-carrier costs, which pushes capacity out.</div></div>
+</div>
+</section>
+
+<section id="demand">
+<span class="kick">Demand</span>
+<h2>Is anyone actually shipping more?</h2>
+<p class="sub">The 2026 rally is supply-driven. The bull case needs the demand leg to arrive while capacity is still capped. Cass Freight Index, auto-refreshed from FRED.</p>
+<div class="grid g2">
+  <div class="card"><h3>Cass shipments y/y % vs Robinson NAST truckload volume y/y %</h3><div class="ctrl" data-for="chCass"><button class="btn" data-r="36">3Y</button><button class="btn active" data-r="84">7Y</button><button class="btn" data-r="0">All</button></div><div class="cw"><canvas id="chCass"></canvas></div><div class="note">Robinson beating Cass is the share-gain evidence (13 straight quarters through 2Q26). Cass shipments negative for 15 quarters is the demand trough. Watch for the Cass line crossing zero.</div></div>
+  <div class="card"><h3>Cass expenditures y/y and implied cost per shipment y/y</h3><div class="cw"><canvas id="chCassExp"></canvate></canvas></div><div class="note">Expenditures ÷ shipments is a free proxy for the all-in freight rate. When it runs far ahead of shipments, rates are doing the work, not volume: exactly the current picture.</div></div>
+</div>
+</section>
+
+<section id="capacity">
+<span class="kick">Capacity</span>
+<h2>Trucks and drivers: leaving now, returning when?</h2>
+<p class="sub">Capacity leaving pushes spot up (squeeze now). Capacity returning caps spot (broker sweet spot later). Orders lead deliveries by 6 to 18 months.</p>
+<div class="grid g2">
+  <div class="card"><h3>Class 8 net orders, units per month</h3><div class="cw"><canvas id="chClass8"></canvas></div><div class="note" id="c8Note">Manual series from ACT Research / FTR preliminary releases. Replacement demand is roughly 18k to 20k a month; sustained orders above 30k signal a capacity flood 12 to 18 months out.</div></div>
+  <div class="card"><h3>FMCSA net change in for-hire carrier authorities</h3><div class="cw"><canvas id="chAuth"></canvas></div><div class="note">Manual series from FTR / Carrier Details as reported in trade press. Negative = more carriers exiting than entering = supply leaving. This is the series behind the 2026 "supply-driven recovery".</div></div>
+  <div class="card"><h3>Truck transportation employment (BLS), y/y %</h3><div class="cw"><canvas id="chJobs"></canvas></div><div class="note">FRED CES4348400001, auto-refreshed. A slow but public read on driver supply. Falling employment with rising rates is the 2026 signature.</div></div>
+  <div class="card"><h3>Enforcement and exit events</h3><div id="events" style="max-height:300px;overflow-y:auto"></div><div class="note">Drivers placed out of service on English-proficiency checks, non-domiciled CDL revocations, notable carrier failures. Entered by hand as reported.</div></div>
+</div>
+</section>
+
+<section id="chrw">
+<span class="kick">Robinson's own disclosures</span>
+<h2>The gap, measured at the company</h2>
+<p class="sub">Robinson discloses truckload price per mile and cost per mile changes every quarter. The difference is the squeeze; the NAST gross margin is its result. The company also gives three monthly AGP-per-day readings on each call, the only intra-quarter signal it provides.</p>
+<div class="grid g2">
+  <div class="card"><h3>Truckload price per mile vs cost per mile, y/y % (18 years)</h3><div class="ctrl" data-for="chPxCost"><button class="btn" data-r="20">5Y</button><button class="btn active" data-r="0">All</button></div><div class="cw tall"><canvas id="chPxCost"></canvas></div><div class="note">Source: Goldman Sachs model "Volume, Pricing, Cost History" tab (company-disclosed, 1Q08 to 1Q26) plus quarterly releases since. Cost above price = squeeze (2011, 2014, 2018, 2021, 2026). Price above cost = sweet spot (2009, 2016, 2019, 2022-23).</div></div>
+  <div class="card"><h3>NAST gross margin % and adjusted operating margin %</h3><div class="cw tall"><canvas id="chNast"></canvas></div><div class="note">Gross margin = AGP ÷ gross revenue (the spread). Operating margin = operating income ÷ AGP (the cost base). The bull case is the first line recovering to 14%+ while the second holds near 40%.</div></div>
+  <div class="card"><h3>AGP per business day, y/y % by month</h3><div class="cw short"><canvas id="chAgpDay"></canvas></div><div class="note">Management's monthly cadence, given on each earnings call. Deceleration inside a quarter (Apr +9, May +7, Jun +3 in 2Q26) is what the bears cited.</div></div>
+  <div class="card"><h3>Quarterly KPI table</h3><div style="overflow-x:auto"><table id="kpiTable"></table></div><div class="note">From press releases and call transcripts; null where not disclosed. Add a column each quarter in <code>data/manual.json → chrw_q</code>.</div></div>
+</div>
+</section>
+
+<section id="analog">
+<span class="kick">Cycle analogs</span>
+<h2>How the last two squeezes played out, aligned at the start</h2>
+<p class="sub">Quarter 0 is the first quarter in which Robinson's truckload cost per mile rose faster than its price per mile by more than 3 points. Lines show what happened over the following two years. If 2026 follows the pattern, the margin trough is one to two quarters away and the share price bottoms before it.</p>
+<div class="grid g2">
+  <div class="card"><h3>Price minus cost gap, percentage points, from squeeze start</h3><div class="cw"><canvas id="chAnalogGap"></canvas></div><div class="note">Positive = spread widening. 2017-18 and 2020-21 both spent about four quarters negative before turning.</div></div>
+  <div class="card"><h3>Share price, indexed to 100 at squeeze start</h3><div class="cw"><canvas id="chAnalogPx"></canvas></div><div class="note">In both prior squeezes the stock was flat to up during the squeeze and ran in the catch-up phase. 2026 is the first squeeze where the stock fell, and the difference is the July verdict.</div></div>
+</div>
+</section>
+
+<section id="stock">
+<span class="kick">Stock</span>
+<h2>Share price and valuation context</h2>
+<div class="grid g32">
+  <div class="card"><h3>CHRW vs Knight-Swift vs S&amp;P 500, indexed (weekly, auto-refreshed)</h3><div class="ctrl" data-for="chPx"><button class="btn" data-r="52">1Y</button><button class="btn active" data-r="156">3Y</button><button class="btn" data-r="260">5Y</button><button class="btn" data-r="0">10Y</button></div><div class="cw tall"><canvas id="chPx"></canvas></div><div class="note">Knight-Swift is the asset-based comparison: when truckers outperform brokers during a squeeze, the market is pricing Bernstein's "assets win the repricing" view.</div></div>
+  <div class="card"><h3>Forward P/E bands (Bloomberg basis)</h3><div id="valBox"></div><div class="note">Update <code>valuation</code> in manual.json when consensus moves. Bands: 5-year mean 20.8x, ±1 SD 16.8x / 24.9x (24 Sep 2026).</div></div>
+</div>
+</section>
+
+<section id="calendar">
+<span class="kick">Calendar</span>
+<h2>Dates that flip signposts</h2>
+<div class="card"><div class="tl" id="cal"></div></div>
+</section>
+
+<section id="sources">
+<span class="kick">Sources and updating</span>
+<h2>Where each series comes from and how to refresh it</h2>
+<div class="card"><table id="srcTable"></table></div>
+<div class="card" style="margin-top:14px"><h3>Phase-vote rules</h3><div id="rules" style="font-size:13px;color:var(--muted)"></div></div>
+</section>
+
+<footer>CHRW Freight Cycle Tracker · companion to the <a href="https://juankhye.github.io/chrw-dashboard/">research dashboard</a>. Auto data via FRED and Yahoo Finance; manual data as cited. Research aid, not investment advice.</footer>
+</div>
+
+<script>
+const C={blue:'#3987e5',orange:'#d95926',aqua:'#199e70',yellow:'#c98500',violet:'#9085e9',red:'#e66767',muted:'#9aa5b8',green:'#5fd49f',amber:'#f0b35a'};
+Chart.defaults.color=C.muted;Chart.defaults.font.family='Inter, system-ui, sans-serif';Chart.defaults.font.size=11.5;Chart.defaults.animation.duration=400;
+Chart.defaults.plugins.legend.labels.boxWidth=10;Chart.defaults.plugins.legend.labels.usePointStyle=true;Chart.defaults.plugins.legend.position='bottom';
+Chart.defaults.plugins.tooltip.backgroundColor='#1b2130';Chart.defaults.plugins.tooltip.borderColor='#2e384b';Chart.defaults.plugins.tooltip.borderWidth=1;
+Chart.defaults.elements.line.borderWidth=2;Chart.defaults.elements.line.tension=.2;Chart.defaults.elements.point.radius=0;Chart.defaults.elements.point.hoverRadius=4;
+const grid={color:'rgba(255,255,255,.05)'};const charts={};
+function mk(id,cfg){const el=document.getElementById(id);if(!el)return;if(charts[id])charts[id].destroy();charts[id]=new Chart(el,cfg);}
+const pct=v=>v==null?'—':(v>0?'+':'')+Number(v).toFixed(1)+'%';
+const fmt=(v,d=2)=>v==null?'—':Number(v).toFixed(d);
+const pill=(s,t)=>`<span class="pill ${s}">${t||s}</span>`;
+const PH={A:'A · Bottom',B:'B · Squeeze',C:'C · Catch-up',D:'D · Top',E:'E · Bust'};
+const last=(a)=>{for(let i=a.length-1;i>=0;i--)if(a[i]!=null)return a[i];return null;};
+const lastIdx=(a)=>{for(let i=a.length-1;i>=0;i--)if(a[i]!=null)return i;return -1;};
+function tail(labels,arr,n){if(!n||n>=labels.length)return[labels,arr];return[labels.slice(-n),arr.slice(-n)];}
+function toMonthly(dates,values){ // weekly -> monthly last value
+  const m={};dates.forEach((d,i)=>{m[d.slice(0,7)]=values[i];});const k=Object.keys(m).sort();return[k,k.map(x=>m[x])];}
+function align(months,src){const map={};src.months.forEach((m,i)=>map[m]=i);return k=>months.map(m=>map[m]!=null?src[k][map[m]]:null);}
+
+Promise.all([fetch('data/auto.json?'+Date.now()).then(r=>r.json()),fetch('data/manual.json?'+Date.now()).then(r=>r.json())]).then(([A,M])=>{
+  document.getElementById('asof').innerHTML=`Auto data generated <b>${A.generated_utc}</b>. Manual data as of <b>${M.as_of}</b>.`;
+  /* ---------- derive latest readings ---------- */
+  const F=A.fred;
+  const dat=M.dat, spotI=lastIdx(dat.van_spot), spot=dat.van_spot[spotI], contract=last(dat.van_contract);
+  const spot12=dat.van_spot[spotI-12]; const spotYoY=spot12?(spot/spot12-1)*100:null; const spotMoM=dat.van_spot[spotI-1]?(spot/dat.van_spot[spotI-1]-1)*100:null;
+  const spread=spot!=null&&contract!=null?spot-contract:null;
+  const otri=last(M.otri.values);
+  const cassY=last(F.cass_shipments.yoy), cassExpY=last(F.cass_expend.yoy), rateProxyY=last(F.cass_rate_proxy.yoy);
+  const ppiY=last(F.tl_ppi.yoy), dieselV=last(F.diesel.values), dieselY=last(F.diesel.yoy), jobsY=last(F.truck_jobs.yoy);
+  const c8=M.capacity.class8_orders, c8i=lastIdx(c8), c8avg=[c8[c8i],c8[c8i-1],c8[c8i-2]].filter(x=>x!=null); const c8m=c8avg.reduce((a,b)=>a+b,0)/c8avg.length;
+  const auth=last(M.capacity.net_authority);
+  const Q=M.chrw_q, qi=Q.quarters.length-1;
+  const gap=Q.tl_price[qi]-Q.tl_cost[qi]; const gm=Q.nast_gm[qi], gmPrev=Q.nast_gm[qi-1];
+  const px=A.prices.CHRW, pxLast=px.last||last(px.close);
+  /* ---------- indicator votes ---------- */
+  // each: name, reading, phase, weight, why
+  const votes=[];
+  const add=(name,reading,phase,w,why,cls)=>votes.push({name,reading,phase,w,why,cls});
+  add('DAT spot vs contract',`spot ${fmt(spot)} / contract ${fmt(contract)} → spread ${spread>0?'+':''}${fmt(spread)}`, spread==null?null:(spread>0.10?'B':spread<-0.10&&spotYoY>10?'C':spread<-0.10?'D':'C'), 3,'Spot above contract = squeeze (B). Spot back below a repriced contract while still up big y/y = catch-up (C). Spot below contract with spot falling y/y = the 2022 sweet-spot top (D)', spread>0.1?'red':spread<-0.1?'up':'fl');
+  add('DAT spot momentum',`${pct(spotYoY)} y/y, ${pct(spotMoM)} m/m`, spotYoY==null?null:(spotYoY>15&&spotMoM>0?'B':spotYoY>15&&spotMoM<=0?'C':spotYoY<-5?'E':'A'), 2,'Rising fast = squeeze deepening; flattening at high y/y = catch-up window opening', spotYoY>15&&spotMoM<=0?'up':spotYoY>15?'red':'fl');
+  add('CHRW cost vs price per mile',`price ${pct(Q.tl_price[qi]*100)} / cost ${pct(Q.tl_cost[qi]*100)} → gap ${(gap*100).toFixed(1)}pp (${Q.quarters[qi]})`, gap<-0.03?'B':gap>0.03?'D':'C', 3,'Company-disclosed. Cost outrunning price is the squeeze at the source', gap<-0.03?'red':gap>0.03?'up':'fl');
+  add('NAST gross margin, sequential',`${fmt(gm*100,1)}% vs ${fmt(gmPrev*100,1)}% prior qtr`, gm<gmPrev?'B':gm>gmPrev+0.003?'C':'B', 3,'The tell that contracts have caught up: two consecutive upticks = C', gm>gmPrev?'up':'red');
+  add('Tender rejections (OTRI)',`${otri!=null?otri.toFixed(1)+'%':'—'}`, otri==null?null:(otri>7?'B':otri>4.5?'C':'A'), 2,'Above ~7% capacity is tight and contract freight is being refused', otri>7?'red':otri>4.5?'fl':'up');
+  add('Cass shipments y/y',`${pct(cassY)}`, cassY==null?null:(cassY<-3?'A':cassY<0?'B':cassY<4?'C':'D'), 2,'Demand. Deeply negative = trough; first positive prints while capacity is capped = the bull mechanism (C); strong growth = late cycle', cassY<-3?'red':cassY<0?'fl':'up');
+  add('Cass cost per shipment y/y',`${pct(rateProxyY)}`, rateProxyY==null?null:(rateProxyY>10?'B':rateProxyY>0?'C':'E'), 1,'Expenditures ÷ shipments: all-in rate proxy', rateProxyY>10?'red':'fl');
+  add('Truckload PPI y/y',`${pct(ppiY)}`, ppiY==null?null:(ppiY>8?'B':ppiY>0?'C':ppiY>-5?'A':'E'), 2,'BLS contract-blend price. Peaks lead Robinson earnings peaks by 6-12 months', ppiY>8?'red':ppiY>0?'fl':'up');
+  add('Class 8 orders, 3-mo avg',`${c8m?Math.round(c8m).toLocaleString():'—'} /mo`, c8m==null?null:(c8m>30000?'D':c8m>20000?'C':'A'), 2,'Above replacement (~20k) means capacity arrives in 12-18 months and spot gets capped: good for the gap later, marks the top later still', c8m>30000?'fl':c8m>20000?'up':'red');
+  add('Net carrier authorities',`${auth!=null?(auth>0?'+':'')+auth.toLocaleString():'—'} /mo`, auth==null?null:(auth<-1000?'A':auth<0?'B':auth<1500?'C':'D'), 2,'Net exits = supply leaving (bottom / squeeze). Net entry returning as spot rises = classic mid-cycle (C); heavy entry = late cycle (D)', auth<0?'red':auth<1500?'fl':'up');
+  add('Truck transport jobs y/y',`${pct(jobsY)}`, jobsY==null?null:(jobsY<-1?'B':jobsY<1?'C':'D'), 1,'Slow public proxy for driver supply', jobsY<-1?'red':'fl');
+  add('Diesel y/y',`$${fmt(dieselV)} (${pct(dieselY)})`, dieselY==null?null:(dieselY>20?'B':'C'), 1,'Pass-through, but squeezes small carriers and dilutes margin %', dieselY>20?'red':'fl');
+  // tally
+  const tally={A:0,B:0,C:0,D:0,E:0};let tw=0;votes.forEach(v=>{if(v.phase){tally[v.phase]+=v.w;tw+=v.w;}});
+  const lead=Object.keys(tally).sort((a,b)=>tally[b]-tally[a])[0];
+  document.getElementById('gauge').innerHTML=Object.keys(PH).map(k=>`<div class="ph ${k===lead?'now':''}"><div class="k">${PH[k]}</div><div class="d">${{A:'rates below cost, profit trough',B:'spot > contract, margin squeezed',C:'contracts reset, gap re-opens',D:'spot < contract, widest gap',E:'rates collapse, profit halves'}[k]}</div><div class="votes"><i style="width:${(tally[k]/tw*100).toFixed(0)}%"></i></div><div class="vn">${(tally[k]/tw*100).toFixed(0)}% of weighted votes</div></div>`).join('');
+  document.getElementById('phaseNote').innerHTML=`<b>Lead phase: ${PH[lead]}</b> with ${(tally[lead]/tw*100).toFixed(0)}% of the weighted vote. ${M.phase.note||''}`;
+  document.getElementById('kpis').innerHTML=[
+    ['DAT van spot',`$${fmt(spot)}`,`${pct(spotYoY)} y/y · ${dat.months[spotI]}`,spotYoY>15?'red':'fl'],
+    ['Spot − contract',`${spread>0?'+':''}${fmt(spread)}`,'$/mile',spread>0.15?'red':spread<-0.1?'up':'fl'],
+    ['Cass shipments',pct(cassY),`y/y · ${last(F.cass_shipments.dates).slice(0,7)}`,cassY<-3?'red':'fl'],
+    ['NAST gross margin',`${fmt(gm*100,1)}%`,`${Q.quarters[qi]} · prior ${fmt(gmPrev*100,1)}%`,gm>gmPrev?'up':'red'],
+    ['Class 8 orders',c8m?Math.round(c8m/1000)+'k':'—','3-mo avg /mo',c8m>30000?'fl':'up'],
+    ['CHRW price',`$${fmt(pxLast)}`,`fwd P/E ≈ ${fmt(pxLast/M.valuation.fwd_eps,1)}x`,'']
+  ].map(k=>`<div class="kpi"><div class="v ${k[3]}">${k[1]}</div><div class="l">${k[0]}</div><div class="s">${k[2]}</div></div>`).join('');
+  document.getElementById('indTable').innerHTML=`<div class="ind" style="color:var(--muted);font-size:11.5px;text-transform:uppercase;letter-spacing:.5px"><div>Indicator</div><div>Weight</div><div>Phase vote</div><div>Latest / rule</div></div>`+votes.map(v=>`<div class="ind"><div><b>${v.name}</b><div class="why">${v.why}</div></div><div class="num">${v.w}</div><div>${v.phase?`<span class="pill ${v.phase==='B'||v.phase==='E'?'red':v.phase==='C'||v.phase==='D'?'green':'amber'}">${PH[v.phase]}</span>`:pill('grey','no data')}</div><div class="${v.cls||''}">${v.reading}</div></div>`).join('');
+  /* ---------- signposts ---------- */
+  document.getElementById('signTable').innerHTML=`<tr><th>#</th><th>Signpost</th><th>Trigger</th><th>Latest</th><th>Status</th><th>Next check</th></tr>`+M.signposts.map(s=>`<tr><td class="num">${s.id}</td><td><b>${s.name}</b><div style="color:var(--dim);font-size:11.5px">${s.why||''}</div></td><td>${s.trigger}</td><td>${s.latest}</td><td>${pill(s.status,{green:'Met',amber:'Watch',red:'Not yet',grey:'n/a'}[s.status])}</td><td>${s.next||''}</td></tr>`).join('');
+  /* ---------- charts ---------- */
+  const rangeCtrl=(id,draw)=>{document.querySelectorAll(`[data-for="${id}"] .btn`).forEach(b=>b.addEventListener('click',()=>{document.querySelectorAll(`[data-for="${id}"] .btn`).forEach(x=>x.classList.remove('active'));b.classList.add('active');draw(parseInt(b.dataset.r));}));};
+  // DAT
+  const drawDat=n=>{const [l,s]=tail(dat.months,dat.van_spot,n);const [,c]=tail(dat.months,dat.van_contract,n);
+    mk('chDat',{type:'line',data:{labels:l,datasets:[{label:'Spot $/mi',data:s,borderColor:C.orange,spanGaps:true},{label:'Contract $/mi',data:c,borderColor:C.blue,spanGaps:true}]},options:{responsive:true,maintainAspectRatio:false,interaction:{mode:'index',intersect:false},scales:{y:{grid},x:{grid:{display:false},ticks:{maxTicksLimit:12}}}}});};
+  rangeCtrl('chDat',drawDat);drawDat(36);
+  document.getElementById('datNote').textContent=dat.note||'';
+  const sp=dat.months.map((m,i)=>dat.van_spot[i]!=null&&dat.van_contract[i]!=null?+(dat.van_spot[i]-dat.van_contract[i]).toFixed(2):null);
+  const otriAl=align(dat.months,M.otri)('values');
+  mk('chSpread',{data:{labels:dat.months,datasets:[{type:'bar',label:'Spot − contract $/mi',data:sp,backgroundColor:sp.map(v=>v>0?'rgba(230,103,103,.7)':'rgba(25,158,112,.7)'),yAxisID:'y'},{type:'line',label:'Tender rejections OTRI %',data:otriAl,borderColor:C.violet,spanGaps:true,yAxisID:'y2',pointRadius:2}]},options:{responsive:true,maintainAspectRatio:false,interaction:{mode:'index',intersect:false},scales:{y:{grid,title:{display:true,text:'$/mi'}},y2:{position:'right',grid:{display:false},title:{display:true,text:'OTRI %'},suggestedMin:0},x:{grid:{display:false},ticks:{maxTicksLimit:12}}}}});
+  // PPI
+  const drawPpi=n=>{const [l,v]=tail(F.tl_ppi.dates.map(d=>d.slice(0,7)),F.tl_ppi.yoy,n);mk('chPpi',{type:'line',data:{labels:l,datasets:[{label:'TL PPI y/y %',data:v,borderColor:C.blue,fill:{target:'origin',above:'rgba(57,135,229,.12)',below:'rgba(230,103,103,.12)'}}]},options:{responsive:true,maintainAspectRatio:false,scales:{y:{grid},x:{grid:{display:false},ticks:{maxTicksLimit:12}}},plugins:{legend:{display:false}}}});};
+  rangeCtrl('chPpi',drawPpi);drawPpi(120);
+  // Diesel
+  {const d=F.diesel;const [l,v]=tail(d.dates,d.values,260);const [,y]=tail(d.dates,d.yoy,260);mk('chDiesel',{data:{labels:l,datasets:[{type:'line',label:'$/gal',data:v,borderColor:C.yellow,yAxisID:'y'},{type:'line',label:'y/y %',data:y,borderColor:C.violet,borderDash:[4,4],yAxisID:'y2'}]},options:{responsive:true,maintainAspectRatio:false,interaction:{mode:'index',intersect:false},scales:{y:{grid},y2:{position:'right',grid:{display:false}},x:{grid:{display:false},ticks:{maxTicksLimit:10}}}}});}
+  // Cass vs CHRW volume
+  const cassM=F.cass_shipments.dates.map(d=>d.slice(0,7));
+  const drawCass=n=>{const [l,v]=tail(cassM,F.cass_shipments.yoy,n);
+    // CHRW TL vol quarterly -> put on the quarter-end month
+    const qmap={};Q.quarters.forEach((q,i)=>{const yr=2000+parseInt(q.slice(2));const mo={1:'03',2:'06',3:'09',4:'12'}[q[0]];qmap[`${yr}-${mo}`]=Q.tl_vol[i]!=null?Q.tl_vol[i]*100:null;});
+    // also GS history
+    M.gs_vpc.q.forEach((q,i)=>{const yr=2000+parseInt(q.slice(2));const mo={1:'03',2:'06',3:'09',4:'12'}[q[0]];const k=`${yr}-${mo}`;if(qmap[k]==null&&M.gs_vpc.tl_vol[i]!=null)qmap[k]=M.gs_vpc.tl_vol[i]*100;});
+    const cv=l.map(m=>qmap[m]!=null?+qmap[m].toFixed(1):null);
+    mk('chCass',{data:{labels:l,datasets:[{type:'line',label:'Cass shipments y/y %',data:v,borderColor:C.orange},{type:'bar',label:'CHRW NAST truckload volume y/y % (quarterly)',data:cv,backgroundColor:'rgba(57,135,229,.85)',barThickness:'flex',maxBarThickness:14}]},options:{responsive:true,maintainAspectRatio:false,interaction:{mode:'index',intersect:false},scales:{y:{grid},x:{grid:{display:false},ticks:{maxTicksLimit:12}}}}});};
+  rangeCtrl('chCass',drawCass);drawCass(84);
+  {const [l,e]=tail(cassM,F.cass_expend.yoy,84);const [,r]=tail(F.cass_rate_proxy.dates.map(d=>d.slice(0,7)),F.cass_rate_proxy.yoy,84);mk('chCassExp',{type:'line',data:{labels:l,datasets:[{label:'Expenditures y/y %',data:e,borderColor:C.aqua},{label:'Cost per shipment y/y %',data:r,borderColor:C.violet,borderDash:[4,4]}]},options:{responsive:true,maintainAspectRatio:false,interaction:{mode:'index',intersect:false},scales:{y:{grid},x:{grid:{display:false},ticks:{maxTicksLimit:12}}}}});}
+  // Class 8 & authorities
+  mk('chClass8',{type:'bar',data:{labels:M.capacity.months,datasets:[{label:'Class 8 net orders',data:M.capacity.class8_orders,backgroundColor:M.capacity.class8_orders.map(v=>v>30000?'rgba(230,103,103,.75)':v>20000?'rgba(240,179,90,.75)':'rgba(57,135,229,.75)')},{type:'line',label:'Replacement ~20k',data:M.capacity.months.map(()=>20000),borderColor:C.muted,borderDash:[4,4],pointRadius:0}]},options:{responsive:true,maintainAspectRatio:false,scales:{y:{grid},x:{grid:{display:false},ticks:{maxTicksLimit:12}}}}});
+  mk('chAuth',{type:'bar',data:{labels:M.capacity.months,datasets:[{label:'Net authority change',data:M.capacity.net_authority,backgroundColor:M.capacity.net_authority.map(v=>v<0?'rgba(230,103,103,.75)':'rgba(25,158,112,.75)')}]},options:{responsive:true,maintainAspectRatio:false,scales:{y:{grid},x:{grid:{display:false},ticks:{maxTicksLimit:12}}},plugins:{legend:{display:false}}}});
+  {const j=F.truck_jobs;const [l,v]=tail(j.dates.map(d=>d.slice(0,7)),j.yoy,120);mk('chJobs',{type:'line',data:{labels:l,datasets:[{label:'Truck transportation employment y/y %',data:v,borderColor:C.aqua,fill:{target:'origin',above:'rgba(25,158,112,.12)',below:'rgba(230,103,103,.12)'}}]},options:{responsive:true,maintainAspectRatio:false,scales:{y:{grid},x:{grid:{display:false},ticks:{maxTicksLimit:10}}},plugins:{legend:{display:false}}}});}
+  document.getElementById('events').innerHTML=`<table>${(M.capacity.enforcement_events||[]).map(e=>`<tr><td class="num" style="text-align:left;white-space:nowrap">${e.date}</td><td>${e.what}${e.url?` <a href="${e.url}" target="_blank">↗</a>`:''}</td></tr>`).join('')||'<tr><td>No events recorded.</td></tr>'}</table>`;
+  // CHRW price vs cost (GS history + company quarters)
+  const allQ=[...M.gs_vpc.q], pxs=[...M.gs_vpc.tl_price], cst=[...M.gs_vpc.tl_cost], vol=[...M.gs_vpc.tl_vol];
+  Q.quarters.forEach((q,i)=>{if(!allQ.includes(q)){allQ.push(q);pxs.push(Q.tl_price[i]);cst.push(Q.tl_cost[i]);vol.push(Q.tl_vol[i]);}});
+  const drawPx=n=>{const [l,p]=tail(allQ,pxs.map(v=>v!=null?+(v*100).toFixed(1):null),n);const [,c]=tail(allQ,cst.map(v=>v!=null?+(v*100).toFixed(1):null),n);const [,v]=tail(allQ,vol.map(x=>x!=null?+(x*100).toFixed(1):null),n);
+    mk('chPxCost',{data:{labels:l,datasets:[{type:'line',label:'Price per mile y/y %',data:p,borderColor:C.blue},{type:'line',label:'Cost per mile y/y %',data:c,borderColor:C.orange},{type:'bar',label:'TL volume y/y %',data:v,backgroundColor:'rgba(25,158,112,.4)'}]},options:{responsive:true,maintainAspectRatio:false,interaction:{mode:'index',intersect:false},scales:{y:{grid},x:{grid:{display:false},ticks:{maxTicksLimit:18}}}}});};
+  rangeCtrl('chPxCost',drawPx);drawPx(0);
+  mk('chNast',{type:'line',data:{labels:Q.quarters,datasets:[{label:'NAST gross margin %',data:Q.nast_gm.map(v=>v!=null?+(v*100).toFixed(1):null),borderColor:C.orange,yAxisID:'y',pointRadius:3},{label:'NAST operating margin % of AGP',data:Q.nast_om.map(v=>v!=null?+(v*100).toFixed(1):null),borderColor:C.blue,yAxisID:'y2',pointRadius:3},{label:'Target 40%',data:Q.quarters.map(()=>40),borderColor:'rgba(57,135,229,.35)',borderDash:[4,4],yAxisID:'y2'}]},options:{responsive:true,maintainAspectRatio:false,interaction:{mode:'index',intersect:false},scales:{y:{grid,title:{display:true,text:'Gross margin %'}},y2:{position:'right',grid:{display:false},title:{display:true,text:'Op margin % of AGP'}},x:{grid:{display:false}}}}});
+  mk('chAgpDay',{type:'bar',data:{labels:M.agp_day.months,datasets:[{label:'AGP per business day y/y %',data:M.agp_day.yoy,backgroundColor:M.agp_day.yoy.map(v=>v>=0?'rgba(25,158,112,.75)':'rgba(230,103,103,.75)')}]},options:{responsive:true,maintainAspectRatio:false,scales:{y:{grid},x:{grid:{display:false}}},plugins:{legend:{display:false}}}});
+  // KPI table
+  const rows=[['TL volume y/y','tl_vol','p'],['LTL volume y/y','ltl_vol','p'],['TL price/mile y/y','tl_price','p'],['TL cost/mile y/y','tl_cost','p'],['TL AGP/shipment y/y','tl_agp_ship','p'],['LTL AGP/order y/y','ltl_agp_order','p'],['NAST AGP $M','nast_agp','n'],['NAST gross margin','nast_gm','p'],['NAST op margin (÷AGP)','nast_om','p'],['GF AGP $M','gf_agp','n'],['GF op margin','gf_om','p'],['Avg headcount','headcount','i'],['Headcount y/y','hc_yoy','p'],['Contract mix','contract_mix','p'],['Adj EPS','eps','d'],['Consensus EPS','cons_eps','d'],['Cass shipments y/y (qtr)','cass_q','p']];
+  const showQ=Q.quarters.slice(-8);const off=Q.quarters.length-showQ.length;
+  document.getElementById('kpiTable').innerHTML=`<tr><th>Metric</th>${showQ.map(q=>`<th class="num">${q}</th>`).join('')}</tr>`+rows.map(r=>`<tr><td>${r[0]}</td>${showQ.map((q,i)=>{const v=(Q[r[1]]||[])[off+i];let t='—';if(v!=null){t=r[2]==='p'?pct(v*100):r[2]==='n'?Math.round(v).toLocaleString():r[2]==='i'?Math.round(v).toLocaleString():'$'+Number(v).toFixed(2);}return `<td class="num">${t}</td>`;}).join('')}</tr>`).join('');
+  // Analogs
+  const qIndex=q=>allQ.indexOf(q);
+  const analogs=M.analogs; // [{label, start:'1Q17'}]
+  const pxM=toMonthly(px.dates,px.close);
+  const qToMonth=q=>`${2000+parseInt(q.slice(2))}-${{1:'03',2:'06',3:'09',4:'12'}[q[0]]}`;
+  const gapDs=[],pxDs=[];const cols=[C.muted,C.violet,C.orange];
+  analogs.forEach((a,k)=>{const i0=qIndex(a.start);const g=[],p=[];for(let t=0;t<=8;t++){const i=i0+t;g.push(i<allQ.length&&pxs[i]!=null&&cst[i]!=null?+((pxs[i]-cst[i])*100).toFixed(1):null);const m=allQ[i]?qToMonth(allQ[i]):null;const mi=m?pxM[0].indexOf(m):-1;p.push(mi>=0?pxM[1][mi]:null);}
+    const base=p.find(x=>x!=null);gapDs.push({label:`${a.label} (from ${a.start})`,data:g,borderColor:cols[k],pointRadius:3,borderWidth:k===analogs.length-1?3:2});pxDs.push({label:`${a.label}`,data:p.map(x=>x!=null&&base?+(x/base*100).toFixed(1):null),borderColor:cols[k],pointRadius:3,borderWidth:k===analogs.length-1?3:2});});
+  const qs=['Q0','Q1','Q2','Q3','Q4','Q5','Q6','Q7','Q8'];
+  mk('chAnalogGap',{type:'line',data:{labels:qs,datasets:gapDs},options:{responsive:true,maintainAspectRatio:false,interaction:{mode:'index',intersect:false},scales:{y:{grid,title:{display:true,text:'price y/y − cost y/y, pp'}},x:{grid:{display:false}}}}});
+  mk('chAnalogPx',{type:'line',data:{labels:qs,datasets:pxDs},options:{responsive:true,maintainAspectRatio:false,interaction:{mode:'index',intersect:false},scales:{y:{grid,title:{display:true,text:'index, Q0 = 100'}},x:{grid:{display:false}}}}});
+  // Stock
+  const drawPxChart=n=>{const P=A.prices;const keys=Object.keys(P);const [l]=tail(P.CHRW.dates,P.CHRW.close,n);
+    const ds=keys.map((k,i)=>{const [,v]=tail(P[k].dates,P[k].close,n);const b=v.find(x=>x!=null);return {label:k,data:v.map(x=>x!=null?+(x/b*100).toFixed(1):null),borderColor:[C.blue,C.orange,C.muted][i],borderWidth:k==='CHRW'?2.5:1.5};});
+    mk('chPx',{type:'line',data:{labels:l,datasets:ds},options:{responsive:true,maintainAspectRatio:false,interaction:{mode:'index',intersect:false},scales:{y:{grid,title:{display:true,text:'indexed to 100'}},x:{grid:{display:false},ticks:{maxTicksLimit:10}}}}});};
+  rangeCtrl('chPx',drawPxChart);drawPxChart(156);
+  const V=M.valuation;const fpe=pxLast/V.fwd_eps;
+  document.getElementById('valBox').innerHTML=`<div class="big">${fpe.toFixed(1)}x</div><div style="color:var(--muted);font-size:12.5px">forward P/E at $${fmt(pxLast)} on $${V.fwd_eps} blended forward EPS</div>
+    <table style="margin-top:10px"><tr><th>Band</th><th class="num">Multiple</th><th class="num">Implied price</th></tr>${[['−1 SD',V.pe_lo],['5-yr mean',V.pe_mean],['+1 SD',V.pe_hi],['Cycle peak',V.pe_peak||30]].map(b=>`<tr><td>${b[0]}</td><td class="num">${b[1]}x</td><td class="num">$${(b[1]*V.fwd_eps).toFixed(0)}</td></tr>`).join('')}</table>
+    <div style="margin-top:10px;font-size:12.5px;color:var(--muted)">Street targets: ${V.targets.map(t=>`${t[0]} $${t[1]}`).join(' · ')}</div>`;
+  // Calendar & sources
+  document.getElementById('cal').innerHTML=M.events.map(e=>`<div class="d">${e.date}</div><div class="x"><b>${e.what}</b> ${e.note||''}</div>`).join('');
+  document.getElementById('srcTable').innerHTML=`<tr><th>Series</th><th>Source</th><th>Frequency</th><th>Refresh</th><th>Where to edit</th></tr>`+M.sources.map(s=>`<tr><td><b>${s.series}</b></td><td>${s.url?`<a href="${s.url}" target="_blank">${s.source}</a>`:s.source}</td><td>${s.freq}</td><td>${s.auto?pill('green','auto'):pill('amber','manual')}</td><td><code style="font-size:11.5px">${s.field}</code></td></tr>`).join('');
+  document.getElementById('rules').innerHTML=`<ul style="margin:0;padding-left:18px">${votes.map(v=>`<li><b style="color:var(--text)">${v.name}</b> (weight ${v.w}): ${v.why}</li>`).join('')}</ul>`;
+}).catch(e=>{document.getElementById('phaseNote').textContent='Data load error: '+e;console.error(e);});
+</script>
+</body>
+</html>
