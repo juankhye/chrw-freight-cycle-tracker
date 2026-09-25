@@ -27,7 +27,7 @@ h2{font-size:20px;font-weight:700;margin:0 0 4px}
 .card h3{margin:0 0 6px;font-size:15.5px;font-weight:700}
 .card .note{color:var(--dim);font-size:12px;margin-top:8px;line-height:1.5}
 .grid{display:grid;gap:14px}.g2{grid-template-columns:1fr 1fr}.g3{grid-template-columns:repeat(3,1fr)}.g32{grid-template-columns:3fr 2fr}.g23{grid-template-columns:2fr 3fr}
-@media(max-width:1000px){.g2,.g3,.g32,.g23{grid-template-columns:1fr}}
+@media(max-width:1000px){.g2,.g3,.g32,.g23{grid-template-columns:1fr}.chain{grid-template-columns:repeat(2,1fr)!important}}
 .cw{position:relative;height:280px}.cw.tall{height:340px}.cw.short{height:220px}
 .ctrl{display:flex;gap:6px;flex-wrap:wrap;margin:6px 0 4px}
 .btn{background:var(--card2);border:1px solid var(--line2);color:var(--muted);padding:5px 10px;border-radius:7px;font-size:12px;cursor:pointer;font-weight:600;font-family:inherit}
@@ -63,7 +63,7 @@ footer{padding:36px 0 50px;color:var(--dim);font-size:12px;line-height:1.6}
 </head>
 <body>
 <nav><div class="in"><div class="brand"><span>CHRW</span>Freight Cycle Tracker</div><div class="links">
-<a href="#phase">Phase</a><a href="#signposts">Signposts</a><a href="#spread">Spot vs Contract</a><a href="#demand">Demand</a><a href="#capacity">Capacity</a><a href="#chrw">CHRW KPIs</a><a href="#analog">Cycle Analogs</a><a href="#stock">Stock</a><a href="#calendar">Calendar</a><a href="#sources">Sources &amp; Updating</a><a href="https://juankhye.github.io/chrw-dashboard/">← Research dashboard</a></div></div></nav>
+<a href="#phase">Phase</a><a href="#signposts">Signposts</a><a href="#mechanics">Mechanics</a><a href="#spread">Spot vs Contract</a><a href="#demand">Demand</a><a href="#capacity">Capacity</a><a href="#chrw">CHRW KPIs</a><a href="#analog">Cycle Analogs</a><a href="#stock">Stock</a><a href="#calendar">Calendar</a><a href="#sources">Sources &amp; Updating</a><a href="https://juankhye.github.io/chrw-dashboard/">← Research dashboard</a></div></div></nav>
 
 <div class="wrap">
 
@@ -97,6 +97,36 @@ footer{padding:36px 0 50px;color:var(--dim);font-size:12px;line-height:1.6}
 <h2>The checklist that decides whether B is turning into C</h2>
 <p class="sub">Status is set by hand after each data release. Rule of thumb from the research: start a position at three greens including margin or revisions, full size at four.</p>
 <div class="card"><table id="signTable"></table></div>
+</section>
+
+<section id="mechanics">
+<span class="kick">Mechanics</span>
+<h2>How the contracts actually work, and why the squeeze happens</h2>
+<p class="sub">Everything on this page feeds one number: the gap between what a shipper pays Robinson and what Robinson pays the trucker. These are the rules of that game, from expert calls with former Robinson staff, brokers, shippers and carriers (AlphaSense, 2025-26) and Robinson's own 2026 calls.</p>
+<div class="grid g3">
+  <div class="card"><h3>1. The annual bid</h3>
+    <p style="margin:6px 0;color:var(--muted)">Large shippers run a truckload RFP once a year, mostly <b style="color:var(--text)">September to December for a March start</b>. Brokers and carriers quote a rate per lane (say Chicago to Los Angeles, dry van). The shipper ranks them into a <b style="color:var(--text)">route guide</b>: primary, secondary, tertiary. About 75-80% of large-shipper freight is still bid annually; roughly 20% of the market has moved to quarterly bids, and multi-year deals with mini-bids are growing.</p>
+    <div class="note">Why it matters: Robinson's sell price on ~70% of its truckload volume is set once, in the bid, and then sits there for 12 months while its buy cost moves every day.</div></div>
+  <div class="card"><h3>2. The contract is a gentlemen's agreement</h3>
+    <p style="margin:6px 0;color:var(--muted)">The rate is "live" until expiry, but there is <b style="color:var(--text)">no binding volume</b> and <b style="color:var(--text)">no linehaul escalator</b>. The shipper is not obliged to tender loads; the broker is not obliged to accept them. When spot runs 20-30% above contract, carriers and brokers simply <b style="color:var(--text)">reject tenders</b>, the route guide "falls apart", and the load goes to spot at a premium. That is what the tender rejection index (OTRI) measures.</p>
+    <div class="note">Why it matters: the squeeze is self-limiting. Robinson chooses how much loss-making contract freight to haul to protect the relationship; experts said it was losing money on some contracts in mid-2026 and living on spot margins.</div></div>
+  <div class="card"><h3>3. Contract vs spot economics</h3>
+    <p style="margin:6px 0;color:var(--muted)">Contract freight is high-volume, low-margin: <b style="color:var(--text)">mid-to-high single-digit</b> gross margins to keep Fortune-100 relationships. Spot is the hedge: <b style="color:var(--text)">15-20%</b> margins, "double or triple" contract. Robinson's mix is ~70% contract (up from 65% a year ago), which is why its blended NAST gross margin (13.1% in 2Q26) sits between the two.</p>
+    <div class="note">Why it matters: a higher contract mix means a bigger squeeze when spot spikes and a bigger payoff when contracts reset. Landstar (100% spot) reprices instantly; Robinson waits for the bid.</div></div>
+  <div class="card"><h3>4. Mid-cycle repricing: mini-bids and the "three-week" claim</h3>
+    <p style="margin:6px 0;color:var(--muted)">When costs jump 30%, brokers go back to shippers to "meet halfway" or push most of the increase through; shippers run <b style="color:var(--text)">mini-bids</b> on the lanes that broke. Historically that takes <b style="color:var(--text)">two to three quarters</b>. In September 2026 Robinson said its AI tooling has cut the average time to reprice the contract book to <b style="color:var(--text)">three weeks</b>, applied lane by lane, with a <b style="color:var(--text)">93% acceptance rate</b>.</p>
+    <div class="note">Why it matters: if the three-week claim holds, the margin trough is shallower and earlier than past cycles. It is unproven at scale. The 4 Nov print is the test.</div></div>
+  <div class="card"><h3>5. Fuel is a pass-through</h3>
+    <p style="margin:6px 0;color:var(--muted)">Nearly all freight is priced as <b style="color:var(--text)">linehaul + fuel surcharge</b>. The surcharge is indexed to the DOE weekly diesel average and resets automatically, on both contract and spot, from shipper to Robinson to carrier. Diesel went from ~$4 to ~$6.50 in 2026.</p>
+    <div class="note">Why it matters: fuel does not change gross profit dollars, but it inflates gross revenue and dilutes margin percentage. Track gross profit per load, not margin %, when diesel moves. It also hurts small carriers, who pay 5-10% more for fuel than big fleets, which pushes capacity out.</div></div>
+  <div class="card"><h3>6. How Robinson buys the truck</h3>
+    <p style="margin:6px 0;color:var(--muted)">About <b style="color:var(--text)">850 carrier reps</b> still call carriers daily alongside the digital load board (Navisphere Carrier). Carriers are graded on on-time and reliability. Scale and network density let Robinson buy an estimated <b style="color:var(--text)">4-5% cheaper</b> than a digital-only broker. Insurance and carrier vetting are now part of procurement: post-Montgomery, the eligible small-carrier pool is smaller and the cost of "quality" capacity higher.</p>
+    <div class="note">Why it matters: the buy side is the moat. When capacity is scarce, the broker that can find a compliant truck at the best price keeps the spread.</div></div>
+</div>
+<div class="card" style="margin-top:14px"><h3>The chain, start to finish</h3>
+  <div style="display:grid;grid-template-columns:repeat(6,1fr);gap:8px;margin-top:8px" class="chain"><div style="background:var(--card2);border:1px solid var(--line2);border-radius:10px;padding:10px;font-size:12.5px"><div style="font-family:JetBrains Mono,monospace;color:#8dbcf5;font-size:11px">STEP 1</div>Shipper runs annual bid (Sep-Dec)</div><div style="background:var(--card2);border:1px solid var(--line2);border-radius:10px;padding:10px;font-size:12.5px"><div style="font-family:JetBrains Mono,monospace;color:#8dbcf5;font-size:11px">STEP 2</div>Robinson wins lanes at a fixed sell rate (70% of TL volume)</div><div style="background:var(--card2);border:1px solid var(--line2);border-radius:10px;padding:10px;font-size:12.5px"><div style="font-family:JetBrains Mono,monospace;color:#8dbcf5;font-size:11px">STEP 3</div>Loads tendered daily; Robinson buys trucks at spot cost</div><div style="background:var(--card2);border:1px solid var(--line2);border-radius:10px;padding:10px;font-size:12.5px"><div style="font-family:JetBrains Mono,monospace;color:#8dbcf5;font-size:11px">STEP 4</div>Spot rises: cost > price, tender rejections climb, margin squeezed</div><div style="background:var(--card2);border:1px solid var(--line2);border-radius:10px;padding:10px;font-size:12.5px"><div style="font-family:JetBrains Mono,monospace;color:#8dbcf5;font-size:11px">STEP 5</div>Mini-bids and the next bid reset sell rates; spot plateaus</div><div style="background:var(--card2);border:1px solid var(--line2);border-radius:10px;padding:10px;font-size:12.5px"><div style="font-family:JetBrains Mono,monospace;color:#8dbcf5;font-size:11px">STEP 6</div>Spot rolls below contract: widest gap, record margin, then bust</div></div>
+  <div class="note">Steps 4 to 6 are phases B, C and D on the cycle map. Contract terms (no volume commitment, no escalator, fuel pass-through) are why the sequence repeats rather than being negotiated away.</div>
+</div>
 </section>
 
 <section id="spread">
