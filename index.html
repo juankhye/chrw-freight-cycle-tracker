@@ -67,7 +67,7 @@ footer{padding:36px 0 50px;color:var(--dim);font-size:12px;line-height:1.6}
 </head>
 <body>
 <nav><div class="in"><div class="brand"><span>CHRW</span>Freight Cycle Tracker</div><div class="links">
-<a href="#decision">Decision chart</a><a href="#phase">Phase</a><a href="#signposts">Signposts</a><a href="#mechanics">Mechanics</a><a href="#spread">Spot vs Contract</a><a href="#demand">Demand</a><a href="#capacity">Capacity</a><a href="#chrw">CHRW KPIs</a><a href="#analog">Cycle Analogs</a><a href="#stock">Stock</a><a href="#calendar">Calendar</a><a href="#sources">Sources &amp; Updating</a><a href="https://juankhye.github.io/chrw-dashboard/">← Research dashboard</a></div></div></nav>
+<a href="#decision">Decision chart</a><a href="#trigger">Buy trigger</a><a href="#phase">Phase</a><a href="#signposts">Signposts</a><a href="#mechanics">Mechanics</a><a href="#spread">Spot vs Contract</a><a href="#demand">Demand</a><a href="#capacity">Capacity</a><a href="#chrw">CHRW KPIs</a><a href="#analog">Cycle Analogs</a><a href="#stock">Stock</a><a href="#calendar">Calendar</a><a href="#sources">Sources &amp; Updating</a><a href="https://juankhye.github.io/chrw-dashboard/">← Research dashboard</a></div></div></nav>
 
 <div class="wrap">
 
@@ -83,6 +83,37 @@ footer{padding:36px 0 50px;color:var(--dim);font-size:12px;line-height:1.6}
   <div class="dc-row"><div class="dc-lbl"><b>Demand</b><span>Cass shipments y/y % (monthly). Crossing zero while capacity is capped is the bull mechanism.</span></div><div class="cw" style="height:140px"><canvas id="dcCass"></canvas></div></div>
   <div class="dc-row"><div class="dc-lbl"><b>Capacity</b><span>Tender rejections OTRI % (violet) and net carrier authorities per month (bars). Rejections falling from a peak = squeeze easing.</span></div><div class="cw" style="height:150px"><canvas id="dcCap"></canvas></div></div>
   <div class="note" id="dcNote"></div>
+</div>
+</section>
+
+<section id="trigger" style="padding-top:18px">
+<span class="kick">Buy trigger board</span>
+<h2>The rule: explicit levels, pass or fail, and what the score means</h2>
+<p class="sub">Two rule sets, tested on every quarter-end since 4Q17 (35 readings). <b>Rule A (entry)</b> is contrarian: it fires when the stock has already fallen hard, Robinson's price-minus-cost gap is at or below zero, and truck rates are not collapsing. That combination has fired 6 times (the sixth is 1Q26, still open); the 5 with a known outcome were all positive over the next 12 months, averaging +26%. <b>Rule B (confirmation)</b> is what most people wait for. On this stock it is late: when 2 of 3 confirmation tests passed, the next 12 months averaged +4%; when 1 or fewer passed, +14%. Use A to decide whether to be in at all, B to decide when to add, and the trim rule to know when the easy part is over.</p>
+<div class="grid g2">
+  <div class="card">
+    <h3>Rule A · Entry (all three must pass)</h3>
+    <table id="ruleA"></table>
+    <div class="note">Why these three: a 15%+ drawdown means the multiple has already been cut; a gap at or below zero means profits are cyclically depressed, not peaking; spot not down more than 10% y/y means this is a squeeze (which ends when contracts reprice) and not a bust (which does not end until trucks leave). Without the third test the rule would also have fired in 2Q23 and lost 7%; spot was down 14% y/y then. The third test was set after seeing that loser, so treat it as a sanity filter, not a proven edge.</div>
+  </div>
+  <div class="card">
+    <h3>Rule B · Confirmation (add when two of three pass)</h3>
+    <table id="ruleB"></table>
+    <div class="note">These are the "it's turning" signals. They lag the stock by two to three quarters. Two of three passing while Rule A still holds is the add signal. All three passing with the stock within 10% of its high is the trim signal: 3Q18 is the only clean instance and the stock fell 15% over the next year.</div>
+  </div>
+</div>
+<div class="card" style="margin-top:14px">
+  <div class="grid g32">
+    <div>
+      <h3>Verdict today</h3>
+      <div id="verdict"></div>
+    </div>
+    <div>
+      <h3>What the rules did in the past</h3>
+      <div style="max-height:420px;overflow:auto"><table id="bt"></table></div>
+      <div class="note">Every quarter-end since 4Q17, newest first. Draw-down is from the trailing 52-week high; gap is CHRW TL price y/y minus cost y/y (GS model to 1Q26, company after); spot is DAT van linehaul y/y from 2023 and BLS truckload PPI y/y before that; +6m and +12m are the price change over the following 6 and 12 months. Green rows are Rule A fires.</div>
+    </div>
+  </div>
 </div>
 </section>
 
@@ -363,6 +394,40 @@ Promise.all([fetch('data/auto.json?'+Date.now()).then(r=>r.json()),fetch('data/m
   document.getElementById('srcTable').innerHTML=`<tr><th>Series</th><th>Source</th><th>Frequency</th><th>Refresh</th><th>Where to edit</th></tr>`+M.sources.map(s=>`<tr><td><b>${s.series}</b></td><td>${s.url?`<a href="${s.url}" target="_blank">${s.source}</a>`:s.source}</td><td>${s.freq}</td><td>${s.auto?pill('green','auto'):pill('amber','manual')}</td><td><code style="font-size:11.5px">${s.field}</code></td></tr>`).join('');
   document.getElementById('rules').innerHTML=`<ul style="margin:0;padding-left:18px">${votes.map(v=>`<li><b style="color:var(--text)">${v.name}</b> (weight ${v.w}): ${v.why}</li>`).join('')}</ul>`;
 
+
+  /* ---------- BUY TRIGGER BOARD ---------- */
+  (function(){
+    const lastP=px.last||px.close[px.close.length-1];
+    const hi52=Math.max(...px.close.slice(-52)); const dd=(lastP/hi52-1)*100; const entryPx=hi52*0.85;
+    const gapNow=(Q.tl_price[qi]-Q.tl_cost[qi])*100; const gapPrev=(Q.tl_price[qi-1]-Q.tl_cost[qi-1])*100;
+    const gmNow=Q.nast_gm[qi]*100, gmPrev=Q.nast_gm[qi-1]*100;
+    const A=[
+      {n:'1 · Stock already de-rated',rule:`Price ≥ 15% below 52-week high → buy zone is $${entryPx.toFixed(0)} or lower`,val:`$${lastP.toFixed(0)} vs high $${hi52.toFixed(0)} → ${dd.toFixed(0)}%`,pass:dd<=-15},
+      {n:'2 · Profits squeezed, not peaking',rule:'CHRW TL price y/y minus cost y/y ≤ 0 pp (latest quarter)',val:`${gapNow.toFixed(1)} pp (${Q.quarters[qi]})`,pass:gapNow<=0},
+      {n:'3 · Squeeze, not bust',rule:'DAT van spot linehaul not down more than 10% y/y',val:`${pct(spotYoY)} y/y (${dat.months[spotI]})`,pass:spotYoY>-10}
+    ];
+    const B=[
+      {n:'4 · Gap improving',rule:'Gap up quarter on quarter',val:`${gapPrev.toFixed(1)} → ${gapNow.toFixed(1)} pp`,pass:gapNow>gapPrev},
+      {n:'5 · Margin turning',rule:'NAST gross margin up quarter on quarter',val:`${gmPrev.toFixed(1)}% → ${gmNow.toFixed(1)}%`,pass:gmNow>gmPrev},
+      {n:'6 · Demand positive',rule:'Cass shipments y/y > 0',val:`${pct(cassY)} (${last(F.cass_shipments.dates).slice(0,7)})`,pass:cassY>0}
+    ];
+    const row=r=>`<tr><td><b>${r.n}</b><div style="color:var(--dim);font-size:11.5px">${r.rule}</div></td><td class="num" style="text-align:left;white-space:normal">${r.val}</td><td>${r.pass?pill('green','PASS'):pill('red','FAIL')}</td></tr>`;
+    document.getElementById('ruleA').innerHTML='<tr><th>Test</th><th>Now</th><th>Status</th></tr>'+A.map(row).join('');
+    document.getElementById('ruleB').innerHTML='<tr><th>Test</th><th>Now</th><th>Status</th></tr>'+B.map(row).join('');
+    const a=A.filter(r=>r.pass).length, b=B.filter(r=>r.pass).length;
+    let verdict, cls, expl;
+    if(spotYoY<=-10){verdict='AVOID · bust still running';cls='red';expl='Truck rates collapsing. Robinson looks cheap in a bust and keeps getting cheaper (1Q23, 2Q23).';}
+    else if(a===3&&b>=2){verdict='ADD · turn confirming';cls='green';expl='Entry conditions hold and the turn is confirming. Historically the middle of the up-move (1Q24).';}
+    else if(a===3){verdict='ENTRY ZONE · build a starter';cls='green';expl='The profile that preceded the best 12-month returns (4Q19, 1Q20, 3Q23, 4Q23). Confirmation has not arrived, so size for it possibly taking two or three more prints. Six-month returns from this setup have ranged from −12% to +48%.';}
+    else if(!A[0].pass&&A[1].pass){verdict=`WAIT FOR PRICE · trigger at $${entryPx.toFixed(0)}`;cls='amber';expl='Profits are squeezed but the stock has not fallen enough. The historical edge came from paying a de-rated price, not from the squeeze alone.';}
+    else if(A[0].pass&&!A[1].pass){verdict='CHEAP BUT NOT SQUEEZED · mixed';cls='amber';expl='Stock down 15%+ but the gap is still positive: 4Q18, 2Q19, 3Q22, 4Q22 all lost money over the next year; 1Q25 made 85%. Coin-flip historically.';}
+    else if(b===3&&dd>-10){verdict='TOP RISK · trim';cls='red';expl='Everything confirmed and the stock near its high. 3Q18 is the template: −15% over the next year.';}
+    else {verdict='HOLD / WATCH';cls='amber';expl='Nothing decisive either way. Wait for the next print or DAT release.';}
+    document.getElementById('verdict').innerHTML=`<div class="big" style="color:${cls==='green'?'var(--green)':cls==='red'?'var(--red)':'var(--amber)'}">${verdict}</div><div style="color:var(--muted);margin:6px 0 10px">Rule A ${a}/3 · Rule B ${b}/3 · price as of ${px.last_time?new Date(px.last_time*1000).toISOString().slice(0,10):M.as_of}</div><div style="font-size:13.5px">${expl}</div><div class="note" style="margin-top:10px">${M.trigger_note||''}</div>`;
+    const bt=M.backtest||[];
+    const f=v=>v==null?'–':(v>0?'+':'')+v+'%';
+    document.getElementById('bt').innerHTML='<tr><th>Qtr</th><th class="num">Draw-down</th><th class="num">Gap pp</th><th class="num">Spot y/y</th><th class="num">Cass y/y</th><th class="num">A</th><th class="num">B</th><th class="num">+6m</th><th class="num">+12m</th></tr>'+bt.map(r=>`<tr style="${r.a===3?'background:rgba(52,199,123,.10)':''}"><td>${r.q}</td><td class="num">${r.dd}%</td><td class="num">${r.gap==null?'–':r.gap}</td><td class="num">${r.spot==null?'–':r.spot+'%'}</td><td class="num">${r.cass==null?'–':r.cass+'%'}</td><td class="num">${r.a}/3</td><td class="num">${r.b}/3</td><td class="num ${r.f6>0?'up':'dn'}">${f(r.f6)}</td><td class="num ${r.f12>0?'up':'dn'}">${f(r.f12)}</td></tr>`).join('');
+  })();
   /* ---------- DECISION CHART ---------- */
   (function(){
     const phases=M.phases||[];
